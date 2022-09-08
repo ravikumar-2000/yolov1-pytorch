@@ -22,16 +22,16 @@ from loss import YoloLoss
 seed = 47
 torch.manual_seed(seed)
 
-LEARNING_RATE = 2e-5
+LEARNING_RATE = 1e-5
 DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
 
-print(f"$$$$$$$$$$$$$$$$$$$$$  using {DEVICE} device $$$$$$$$$$$$$$$$$$$$")
+# print(f"$$$$$$$$$$$$$$$$$$$$$  using {DEVICE} device $$$$$$$$$$$$$$$$$$$$")
 
 
 BATCH_SIZE = 16
-WEIGHT_DECAY = 0
-LOAD_MODEL = True
-LOAD_MODEL_FILE = 'overfit.pth.tar'
+WEIGHT_DECAY = 0.1
+LOAD_MODEL = False
+LOAD_MODEL_FILE = 'trained_model_100_examples.pth.tar'
 EPOCHS = 1000
 NUM_WORKERS = 4
 PIN_MEMORY = True
@@ -50,7 +50,7 @@ class Compose(object):
 transform = Compose([
     transforms.Resize((448, 448)),
     transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))
+    # transforms.Normalize((0.5,), (0.5,))
 ])
 
 def train_fn(train_loader, model, optimizer, loss_fn):
@@ -64,7 +64,7 @@ def train_fn(train_loader, model, optimizer, loss_fn):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        loop.set_postfix(loss=loss.item())
+        loop.set_postfix(mean_loss=(sum(mean_loss)/len(mean_loss)))
     print(f'Mean Loss was {sum(mean_loss)/len(mean_loss)}')
 
 
@@ -76,13 +76,14 @@ def main():
         lr=LEARNING_RATE,
         weight_decay=WEIGHT_DECAY
     )
-    loss_fn = YoloLoss()
+
+    loss_fn = YoloLoss().to(DEVICE)
     
     if LOAD_MODEL:
         load_checkpoint(torch.load(LOAD_MODEL_FILE), model, optimizer)
     
     train_dataset = VOCDataset(
-        'data/8examples.csv',
+        'data/100examples.csv',
         transform=transform,
         img_dir=IMG_DIR,
         label_dir=LABEL_DIR
@@ -114,24 +115,27 @@ def main():
     )
 
     for epoch in range(EPOCHS):
-        pred_boxes, target_boxes = get_bboxes(
-            train_loader, model, iou_threshold=0.5, threshold=0.4, device=DEVICE
-        )
-        mean_avg_prec = mean_average_precision(
-            pred_boxes, target_boxes, iou_threshold=0.5, box_format='midpoint'
-        )
-        print(f'Train MAP: {mean_avg_prec}')
-
-        # if mean_avg_prec > 0.9:
-        checkpoint = {
-            "state_dict": model.state_dict(),
-            "optimizer": optimizer.state_dict(),
-        }
-        # save_checkpoint(checkpoint, filename=LOAD_MODEL_FILE)
-        # sleep(1)
-
         train_fn(train_loader, model, optimizer, loss_fn)
 
+        if epoch%10 == 0:
+
+            pred_boxes, target_boxes = get_bboxes(
+                train_loader, model, iou_threshold=0.5, threshold=0.4, device=DEVICE
+            )
+
+            mean_avg_prec = mean_average_precision(
+                pred_boxes, target_boxes, iou_threshold=0.5, box_format='midpoint'
+            )
+            print(f'Train MAP: {mean_avg_prec}')
+
+            if mean_avg_prec > 0.9:
+                print("came here")
+            checkpoint = {
+                "state_dict": model.state_dict(),
+                "optimizer": optimizer.state_dict(),
+            }
+            save_checkpoint(checkpoint, filename=LOAD_MODEL_FILE)
+            sleep(1)
 
 if __name__ == '__main__':
     main()

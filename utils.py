@@ -1,3 +1,4 @@
+import sys
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
@@ -90,7 +91,7 @@ def non_max_suppression(bboxes, iou_threshold, threshold, box_format="corners"):
 
 
 def mean_average_precision(
-        pred_boxes, true_boxes, iou_threshold=0.5, box_format="midpoint", num_classes=20
+        pred_boxes, true_boxes, iou_threshold=0.4, box_format="midpoint", num_classes=20
     ):
     """
     Calculates mean average precision 
@@ -119,7 +120,7 @@ def mean_average_precision(
         # and only add the ones that belong to the
         # current class c
         for detection in pred_boxes:
-            if detection[1] == c:
+            if int(detection[1]) == c:
                 detections.append(detection)
 
         for true_box in true_boxes:
@@ -191,7 +192,7 @@ def mean_average_precision(
         recalls = torch.cat((torch.tensor([0]), recalls))
         # torch.trapz for numerical integration
         average_precisions.append(torch.trapz(precisions, recalls))
-        print(average_precisions)
+        
     return sum(average_precisions) / len(average_precisions)
 
 
@@ -227,15 +228,16 @@ def plot_image(image, boxes):
 
     plt.show()
 
+
 def get_bboxes(
     loader,
     model,
     iou_threshold,
     threshold,
+    device,
     pred_format="cells",
     box_format="midpoint",
-    device="cpu",
-):
+    ):
     all_pred_boxes = []
     all_true_boxes = []
 
@@ -275,9 +277,11 @@ def get_bboxes(
 
             train_idx += 1
 
+        # print(all_pred_boxes, all_true_boxes)
+        # sys.exit()
+
     model.train()
     return all_pred_boxes, all_true_boxes
-
 
 
 def convert_cellboxes(predictions, S=7):
