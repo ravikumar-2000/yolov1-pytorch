@@ -78,9 +78,14 @@ def main():
     )
 
     loss_fn = YoloLoss().to(DEVICE)
+
+    checkpoint = torch.load(LOAD_MODEL_FILE)
+    print("=> Loading checkpoint")
+    model.load_state_dict(checkpoint["state_dict"])
+    optimizer.load_state_dict(checkpoint["optimizer"])
     
-    if LOAD_MODEL:
-        load_checkpoint(torch.load(LOAD_MODEL_FILE), model, optimizer)
+    # if LOAD_MODEL:
+    #     load_checkpoint(torch.load(LOAD_MODEL_FILE), model, optimizer)
     
     train_dataset = VOCDataset(
         'data/100examples.csv',
