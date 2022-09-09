@@ -18,7 +18,7 @@ NUM_WORKERS = 0
 PIN_MEMORY = True
 LOAD_MODEL = True
 LOAD_MODEL = False
-LOAD_MODEL_FILE = "trained_model_100_examples.pth.tar"
+LOAD_MODEL_FILE = "trained_model_1000_examples.pth.tar"
 
 def run():
 
@@ -29,7 +29,7 @@ def run():
     ])
 
     test_dataset = VOCDataset(
-        "data/train.csv", transform=transform, img_dir=IMG_DIR, label_dir=LABEL_DIR,
+        "data/100examples.csv", transform=transform, img_dir=IMG_DIR, label_dir=LABEL_DIR,
     )
 
     test_loader = DataLoader(
@@ -68,7 +68,7 @@ def run():
             print(bboxes)
             plot_image(x[id].permute(1, 2, 0).to('cpu'), bboxes)
             print(f'image no {id} tested successfully!!!')
-        if idx == 2:
+        if idx == 1:
             break
 
 if __name__ == '__main__':

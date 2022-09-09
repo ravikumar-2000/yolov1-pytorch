@@ -31,7 +31,7 @@ DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
 BATCH_SIZE = 16
 WEIGHT_DECAY = 0.1
 LOAD_MODEL = False
-LOAD_MODEL_FILE = 'trained_model_100_examples.pth.tar'
+LOAD_MODEL_FILE = 'trained_model_1000_examples.pth.tar'
 EPOCHS = 1000
 NUM_WORKERS = 4
 PIN_MEMORY = True
@@ -88,7 +88,7 @@ def main():
     #     load_checkpoint(torch.load(LOAD_MODEL_FILE), model, optimizer)
     
     train_dataset = VOCDataset(
-        'data/100examples.csv',
+        'data/train.csv',
         transform=transform,
         img_dir=IMG_DIR,
         label_dir=LABEL_DIR
@@ -118,6 +118,8 @@ def main():
         shuffle=False,
         drop_last=False
     )
+
+    print(f'training on {len(train_dataset)} images ....')
 
     for epoch in range(EPOCHS):
         train_fn(train_loader, model, optimizer, loss_fn)

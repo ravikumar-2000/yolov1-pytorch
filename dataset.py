@@ -14,7 +14,7 @@ class VOCDataset(torch.utils.data.Dataset):
         C=20,
         transform=None
     ):
-        self.annotations = pd.read_csv(csv_file)
+        self.annotations = pd.read_csv(csv_file).head(1000)
         self.img_dir = img_dir
         self.label_dir = label_dir
         self.S = S
